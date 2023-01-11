@@ -4,7 +4,7 @@ mod tests {
 
     use std::collections::HashMap;
     use crate::Cli;
-    use crate::lib::commands::releases::{assemble_query, execute_list_releases, PaginatedStuff, Release, list_release_args, page_loop};
+    use crate::lib::commands::releases::{assemble_query, execute_list_releases, PaginatedStuff, Release, ListReleasesArgs, page_loop};
     use crate::lib::util::Format;
     use httpmock::prelude::*;
     use serde_json::json;
@@ -19,7 +19,7 @@ mod tests {
             baseJiraUrl: "asdf".to_string(),
             command: None,
         };
-        let args = list_release_args {
+        let args = ListReleasesArgs {
             project: "foo".to_string(),
             filter: None,
             unpaginate: false,
@@ -47,7 +47,7 @@ mod tests {
             baseJiraUrl: "asdf".to_string(),
             command: None,
         };
-        let args = list_release_args {
+        let args = ListReleasesArgs {
             project: "foo".to_string(),
             filter: None,
             unpaginate: true,

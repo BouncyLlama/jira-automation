@@ -11,22 +11,22 @@ use clap::{Parser, Subcommand};
 use env_logger::Env;
 use log::{debug, error, log_enabled, info, Level};
 use struct_field_names_as_array::FieldNamesAsArray;
-use crate::lib::commands::releases::list_release_args;
+use crate::lib::commands::releases::ListReleasesArgs;
 use crate::lib::util::Format;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
 
-    #[arg( long)]
+    #[arg( long,short,help="jira personal access token")]
     authToken: String,
 
     #[clap(value_enum)]
-    #[arg( long)]
+    #[arg( long,default_value_t=Format::csv, help="how returned items should be formatted")]
     output_format:Format,
-    #[arg( long)]
+    #[arg( long,short, help="email address the auth token belongs to")]
     userEmail: String,
-    #[arg( long)]
+    #[arg( long,short,help="base url of the jira instance ex http://potato.atlassian.net")]
     baseJiraUrl: String,
     #[command(subcommand)]
     command: Option<Commands>,
@@ -34,10 +34,13 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Fetch jira releases
-    ListReleases(releases::list_release_args),
+    /// list and optionally filter releases
+    ListReleases(releases::ListReleasesArgs),
+    /// create a new release
     CreateRelease(releases::CreateReleaseArgs),
+    /// delete a release and optionally update tickets to point to a different one
     DeleteRelease(releases::DeleteReleaseArgs),
+    /// update a release
     UpdateRelease(releases::UpdateReleaseArgs)
 }
 
