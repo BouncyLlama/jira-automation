@@ -34,10 +34,10 @@ pub fn execute_transition_issue(ctx: &Cli, args: &TransitionIssueArgs) -> Result
     if args.useTransitionId {} else {
         id = get_transition_id(ctx, args)?;
     }
-    dotransition(ctx, id, args.name.clone())
+    do_transition(ctx, id, args.name.clone())
 }
 
-fn dotransition(ctx: &Cli, transitionId: String, issue: String) -> Result<(), Box<dyn Error>> {
+fn do_transition(ctx: &Cli, transitionId: String, issue: String) -> Result<(), Box<dyn Error>> {
     let req = TransitionIssueRequest {
         transition: ReqTransition { id: transitionId }
     };
