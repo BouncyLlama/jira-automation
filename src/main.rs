@@ -1,5 +1,5 @@
-
 mod lib;
+
 use lib::commands::*;
 use std::borrow::Borrow;
 use std::error::Error;
@@ -17,16 +17,15 @@ use crate::lib::util::Format;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-
-    #[arg( long,short,help="jira personal access token")]
+    #[arg(long, short, help = "jira personal access token")]
     authToken: String,
 
     #[clap(value_enum)]
-    #[arg( long,default_value_t=Format::csv, help="how returned items should be formatted")]
-    output_format:Format,
-    #[arg( long,short, help="email address the auth token belongs to")]
+    #[arg(long, default_value_t = Format::csv, help = "how returned items should be formatted")]
+    output_format: Format,
+    #[arg(long, short, help = "email address the auth token belongs to")]
     userEmail: String,
-    #[arg( long,short,help="base url of the jira instance ex http://potato.atlassian.net")]
+    #[arg(long, short, help = "base url of the jira instance ex http://potato.atlassian.net")]
     baseJiraUrl: String,
     #[command(subcommand)]
     command: Option<Commands>,
@@ -41,7 +40,11 @@ enum Commands {
     /// delete a release and optionally update tickets to point to a different one
     DeleteRelease(releases::DeleteReleaseArgs),
     /// update a release
-    UpdateRelease(releases::UpdateReleaseArgs)
+    UpdateRelease(releases::UpdateReleaseArgs),
+    /// list possible transitions for specified issue
+    ListIssueTransitions(issues::ListIssueTransitionsArgs),
+    /// transition issue
+    TransitionIssue(issues::TransitionIssueArgs),
 }
 
 
@@ -55,9 +58,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     // matches just as you would the top level cmd
     match &cli.command {
         Some(Commands::ListReleases(releaseArgs)) => releases::execute_list_releases(&cli, releaseArgs),
-        Some(Commands::CreateRelease(args))=>releases::execute_create_release(&cli,args),
-        Some(Commands::DeleteRelease(args))=>releases::execute_delete_release(&cli,args),
-        Some(Commands::UpdateRelease(args))=>releases::execute_update_release(&cli,args),
+        Some(Commands::CreateRelease(args)) => releases::execute_create_release(&cli, args),
+        Some(Commands::DeleteRelease(args)) => releases::execute_delete_release(&cli, args),
+        Some(Commands::UpdateRelease(args)) => releases::execute_update_release(&cli, args),
+        Some(Commands::ListIssueTransitions(args)) => issues::execute_list_transitions(&cli, args),
+        Some(Commands::TransitionIssue(args)) => issues::execute_transition_issue(&cli, args),
 
         None => { Ok(()) }
     }

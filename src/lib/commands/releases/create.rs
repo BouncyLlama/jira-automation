@@ -39,5 +39,9 @@ fn assemble_create_args(args: CreateReleaseArgs) -> HashMap<&'static str, String
 pub fn execute_create_release(ctx: &Cli, args: &CreateReleaseArgs) -> Result<(), Box<dyn std::error::Error>> {
     let reqUrl = format!("{}/rest/api/3/version", ctx.baseJiraUrl, );
     let result = util::doPost::<Release, HashMap<&str, String>>(&reqUrl, ctx, &(assemble_create_args(args.clone())))?;
+    if result.is_some() {
+        util::formatPrint::<Release>(Vec::from([result.unwrap()]), ctx.output_format)?;
+    }
+
     Ok(())
 }
