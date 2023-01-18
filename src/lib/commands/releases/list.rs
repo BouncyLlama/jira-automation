@@ -100,7 +100,6 @@ mod tests {
     use std::collections::HashMap;
     use crate::Cli;
     use crate::lib::util::Format;
-    use httpmock::prelude::*;
     use serde_json::json;
 
     #[test]

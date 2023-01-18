@@ -10,7 +10,6 @@ use serde::Deserialize;
 use clap::{Parser, Subcommand};
 use env_logger::Env;
 use log::{debug, error, log_enabled, info, Level};
-use struct_field_names_as_array::FieldNamesAsArray;
 use crate::lib::commands::releases::ListReleasesArgs;
 use crate::lib::util::Format;
 
