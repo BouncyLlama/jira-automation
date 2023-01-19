@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use crate::Cli;
 use std::option::Option;
-use log::debug;
+use log::{debug, trace};
 
 pub fn dothething() {}
 
@@ -50,14 +50,19 @@ pub fn doGet<T: DeserializeOwned, S: Serialize>(reqUrl: &String, ctx: &Cli, quer
 
 pub fn doPost<T: DeserializeOwned + 'static, S: Serialize>(reqUrl: &String, ctx: &Cli, postBody: &S) -> Result<Option<T>, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::new();
+
     let token = base64::encode(format!("{}:{}", ctx.userEmail, ctx.authToken));
     let res = client
         .post(reqUrl).body(serde_json::to_string(postBody).unwrap())
         .header("Content-Type", "application/json").header("Authorization", format!("Basic {}", token)).send()?;
+    trace!("{:?}", serde_json::json!(postBody));
+    trace!("{:?}", res.status());
+    let body = res.text()?;
+    trace!("{:?}", body);
     if TypeId::of::<T>() == TypeId::of::<()>() {
         Ok(None)
     } else {
-        Ok(Some(res.json::<T>()?))
+        Ok(Some(serde_json::from_str(&*body).unwrap()))
     }
 }pub fn doPut<T: DeserializeOwned + 'static, S: Serialize>(reqUrl: &String, ctx: &Cli, postBody: &S) -> Result<Option<T>, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::new();
@@ -65,9 +70,13 @@ pub fn doPost<T: DeserializeOwned + 'static, S: Serialize>(reqUrl: &String, ctx:
     let res = client
         .put(reqUrl).body(serde_json::to_string(postBody).unwrap())
         .header("Content-Type", "application/json").header("Authorization", format!("Basic {}", token)).send()?;
+    trace!("{:?}", serde_json::json!(postBody));
+    trace!("{:?}", res.status());
+    let body = res.text()?;
+    trace!("{:?}", body);
     if TypeId::of::<T>() == TypeId::of::<()>() {
         Ok(None)
     } else {
-        Ok(Some(res.json::<T>()?))
+        Ok(Some(serde_json::from_str(&*body).unwrap()))
     }
 }

@@ -44,6 +44,7 @@ enum Commands {
     ListIssueTransitions(issues::ListIssueTransitionsArgs),
     /// transition issue
     TransitionIssue(issues::TransitionIssueArgs),
+    UpdateIssue(issues::UpdateIssueArgs)
 }
 
 
@@ -62,6 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(Commands::UpdateRelease(args)) => releases::execute_update_release(&cli, args),
         Some(Commands::ListIssueTransitions(args)) => issues::execute_list_transitions(&cli, args),
         Some(Commands::TransitionIssue(args)) => issues::execute_transition_issue(&cli, args),
+        Some(Commands::UpdateIssue(args)) => issues::execute_update_issue(&cli, args),
 
         None => { Ok(()) }
     }
