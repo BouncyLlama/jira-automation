@@ -5,10 +5,11 @@ use crate::Cli;
 use crate::lib::commands::issues::Transition;
 use crate::lib::util;
 use clap::Parser;
+use clap::ArgGroup;
 use super::*;
 
 #[derive(Parser, Clone)]
-#[command()]
+#[command(group(ArgGroup::new("vers").required(true).args(["relatedVersion", "fixVersion"]),))]
 pub struct UpdateIssueArgs {
     #[arg(long, short, help = issueNameHelp)]
     pub(crate) name: String,
