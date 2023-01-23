@@ -1,0 +1,28 @@
+---
+source: src/lib/commands/releases/list.rs
+expression: res
+---
+[
+    Release {
+        id: "1",
+        description: None,
+        name: None,
+        archived: false,
+        released: false,
+        releaseDate: None,
+        overdue: None,
+        userReleaseDate: None,
+        projectId: 0,
+    },
+    Release {
+        id: "2",
+        description: None,
+        name: None,
+        archived: false,
+        released: false,
+        releaseDate: None,
+        overdue: None,
+        userReleaseDate: None,
+        projectId: 0,
+    },
+]

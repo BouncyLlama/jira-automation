@@ -40,15 +40,15 @@ const releaseHelp: &str = "the name or id of the release to perform the operatio
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Release {
-    id: String,
-    description: Option<String>,
-    name: Option<String>,
-    archived: bool,
-    released: bool,
-    releaseDate: Option<String>,
-    overdue: Option<bool>,
-    userReleaseDate: Option<String>,
-    projectId: u64,
+    pub(crate) id: String,
+    pub(crate) description: Option<String>,
+    pub(crate) name: Option<String>,
+    pub(crate) archived: bool,
+    pub(crate) released: bool,
+    pub(crate) releaseDate: Option<String>,
+    pub(crate) overdue: Option<bool>,
+    pub(crate) userReleaseDate: Option<String>,
+    pub(crate) projectId: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

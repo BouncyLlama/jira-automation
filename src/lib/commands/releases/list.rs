@@ -1,18 +1,27 @@
-use std::collections::HashMap;
-use crate::Cli;
+use super::*;
 use crate::lib::commands::releases::{PaginatedReleases, Release};
 use crate::lib::util;
+use crate::Cli;
 use clap::Parser;
-use super::*;
+use std::collections::HashMap;
 
 #[derive(Parser, Clone)]
 #[command()]
 pub struct ListReleasesArgs {
     #[arg(long, short, help = projectHelp)]
     pub(crate) project: String,
-    #[arg(long, short, help = "optionally filter results; substring match in the name and description fields")]
+    #[arg(
+    long,
+    short,
+    help = "optionally filter results; substring match in the name and description fields"
+    )]
     pub(crate) filter: Option<String>,
-    #[arg(long, short, default_value_t = false, help = "automatically query until all pages have been obtained")]
+    #[arg(
+    long,
+    short,
+    default_value_t = false,
+    help = "automatically query until all pages have been obtained"
+    )]
     pub(crate) unpaginate: bool,
     #[arg(long, default_value_t = 50, help = "how many items to return")]
     pub(crate) page_size: i64,
@@ -20,25 +29,29 @@ pub struct ListReleasesArgs {
     pub(crate) page_start_idx: i64,
 }
 
-
 impl ListReleasesArgs {
     fn update_start_idx(&mut self, new: i64) {
         self.page_start_idx = new;
     }
 }
 
-pub fn execute_list_releases(ctx: &Cli, args: &ListReleasesArgs) -> Result<(), Box<dyn std::error::Error>> {
+pub fn execute_list_releases(
+    ctx: &Cli,
+    args: &ListReleasesArgs,
+) -> Result<(), Box<dyn std::error::Error>> {
     let values = do_list_releases(ctx, args)?;
     util::formatPrint::<Release>(values, ctx.output_format)?;
-
 
     Ok(())
 }
 
-pub(crate) fn do_list_releases(ctx: &Cli, args: &ListReleasesArgs) -> Result<Vec<Release>, Box<dyn std::error::Error>> {
+pub(crate) fn do_list_releases(
+    ctx: &Cli,
+    args: &ListReleasesArgs,
+) -> Result<Vec<Release>, Box<dyn std::error::Error>> {
     let (reqUrl, queryParams) = assemble_query(ctx, args);
     let url = reqUrl.clone();
-    let mut values: Vec::<Release>;
+    let mut values: Vec<Release>;
     values = vec![];
     let mut res = util::doGet::<PaginatedReleases<Release>, HashMap<&str, String>>(&reqUrl, ctx, queryParams)?;
 
@@ -91,67 +104,151 @@ fn page_loop(totalResults: i64, args: &ListReleasesArgs) -> Vec<HashMap<&str, St
     return requests;
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::*;
+    use super::*;
 
-    use std::collections::HashMap;
-    use crate::Cli;
+    use super::super::util::*;
     use crate::lib::util::Format;
+    use crate::Cli;
+    use httptest::{matchers::*, responders::*, Expectation, Server, ServerPool};
     use serde_json::json;
+    use std::collections::HashMap;
+
+    static SERVER_POOL: ServerPool = ServerPool::new(2);
+
 
     #[test]
-    fn list() -> Result<(), Box<dyn std::error::Error>> {
+    fn list_releases_paginated() -> Result<(), Box<dyn std::error::Error>> {
+        let server = SERVER_POOL.get_server();
+
         let ctx = Cli {
             authToken: "".to_string(),
 
             output_format: Format::csv,
             userEmail: "".to_string(),
-            baseJiraUrl: "asdf".to_string(),
+            baseJiraUrl: server.url("").to_string(),
             command: None,
         };
         let args = ListReleasesArgs {
             project: "foo".to_string(),
             filter: None,
             unpaginate: false,
-            page_size: 50,
+            page_size: 1,
             page_start_idx: 0,
         };
-        let (url, args) = assemble_query(&ctx, &args);
-        assert!(url.contains("asdf") && url.contains("foo"));
-        assert_eq!(2, args.len());
-        assert!(args.contains_key("startAt"));
-        assert!(args.contains_key("maxResults"));
-        assert_eq!("50", args.get("maxResults").unwrap());
-        assert_eq!("0", args.get("startAt").unwrap());
+        let resp = PaginatedReleases {
+            total: 2,
+            startAt: 0,
+            isLast: true,
+            values: vec![
+                Release {
+                    id: "1".to_string(),
+                    description: None,
+                    name: None,
+                    archived: false,
+                    released: false,
+                    releaseDate: None,
+                    overdue: None,
+                    userReleaseDate: None,
+                    projectId: 0,
+                },
+                Release {
+                    id: "2".to_string(),
+                    description: None,
+                    name: None,
+                    archived: false,
+                    released: false,
+                    releaseDate: None,
+                    overdue: None,
+                    userReleaseDate: None,
+                    projectId: 0,
+                },
+            ],
+        };
+        // Start a server running on a local ephemeral port.
+        // Configure the server to expect a single GET /foo request and respond
+        // with a 200 status code.
+        server.expect(
+            Expectation::matching(any()).respond_with(json_encoded(serde_json::json!(resp))),
+        );
 
+        let res = do_list_releases(&ctx, &args).unwrap();
+        insta::assert_debug_snapshot!(res);
         Ok(())
     }
 
     #[test]
-    fn pageloop() -> Result<(), Box<dyn std::error::Error>> {
+    fn list_releases_unpaginated() -> Result<(), Box<dyn std::error::Error>> {
+        let server = SERVER_POOL.get_server();
+
         let ctx = Cli {
             authToken: "".to_string(),
 
             output_format: Format::csv,
             userEmail: "".to_string(),
-            baseJiraUrl: "asdf".to_string(),
+            baseJiraUrl: server.url("").to_string(),
             command: None,
         };
         let args = ListReleasesArgs {
             project: "foo".to_string(),
             filter: None,
             unpaginate: true,
-            page_size: 50,
+            page_size: 1,
             page_start_idx: 0,
         };
-        let result = page_loop(100, &args);
-        assert_eq!(2, result.len());
-        assert_eq!("0", result.get(0).unwrap().get("startAt").unwrap());
-        assert_eq!("50", result.get(1).unwrap().get("startAt").unwrap());
+        let resp1 = PaginatedReleases {
+            total: 2,
+            startAt: 0,
+            isLast: false,
+            values: vec![
+                Release {
+                    id: "1".to_string(),
+                    description: None,
+                    name: None,
+                    archived: false,
+                    released: false,
+                    releaseDate: None,
+                    overdue: None,
+                    userReleaseDate: None,
+                    projectId: 0,
+                },
+            ],
+        };
+        let resp2 = PaginatedReleases {
+            total: 2,
+            startAt: 1,
+            isLast: true,
+            values: vec![
+                Release {
+                    id: "2".to_string(),
+                    description: None,
+                    name: None,
+                    archived: false,
+                    released: false,
+                    releaseDate: None,
+                    overdue: None,
+                    userReleaseDate: None,
+                    projectId: 0,
+                },
+            ],
+        };
+        // Start a server running on a local ephemeral port.
+        // Configure the server to expect a single GET /foo request and respond
+        // with a 200 status code.
+        server.expect(
+            Expectation::matching(request::query(url_decoded(contains(("startAt", "0"))))).times(2)
+                .respond_with(json_encoded(serde_json::json!(resp2)))
+        );
+        server.expect(Expectation::matching(request::query(url_decoded(contains(("startAt", "1"))))).respond_with(json_encoded(serde_json::json!(resp1))));
 
+        // server.expect(
+        //     Expectation::matching(request::query(url_decoded(contains(("startAt", any()))))).respond_with(json_encoded(serde_json::json!(resp2))), );
+
+        let res = do_list_releases(&ctx, &args)?;
+
+        insta::assert_debug_snapshot!(res);
         Ok(())
     }
 }
