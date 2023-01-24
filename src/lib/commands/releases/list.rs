@@ -8,7 +8,7 @@ use std::collections::HashMap;
 #[derive(Parser, Clone)]
 #[command()]
 pub struct ListReleasesArgs {
-    #[arg(long, short, help = projectHelp)]
+    #[arg(long, short, help = PROJECT_HELP)]
     pub(crate) project: String,
     #[arg(
     long,
@@ -40,7 +40,7 @@ pub fn execute_list_releases(
     args: &ListReleasesArgs,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let values = do_list_releases(ctx, args)?;
-    util::formatPrint::<Release>(values, ctx.output_format)?;
+    util::format_print::<Release>(values, ctx.output_format)?;
 
     Ok(())
 }
@@ -49,16 +49,16 @@ pub(crate) fn do_list_releases(
     ctx: &Cli,
     args: &ListReleasesArgs,
 ) -> Result<Vec<Release>, Box<dyn std::error::Error>> {
-    let (reqUrl, queryParams) = assemble_query(ctx, args);
-    let url = reqUrl.clone();
+    let (req_url, query_params) = assemble_query(ctx, args);
+    let url = req_url.clone();
     let mut values: Vec<Release>;
     values = vec![];
-    let mut res = util::doGet::<PaginatedReleases<Release>, HashMap<&str, String>>(&reqUrl, ctx, queryParams)?;
+    let mut res = util::do_get::<PaginatedReleases<Release>, HashMap<&str, String>>(&req_url, ctx, query_params)?;
 
     if args.unpaginate {
         let arsgs = page_loop(res.total as i64, args);
         for arg in arsgs {
-            let mut res = util::doGet::<PaginatedReleases<Release>, HashMap<&str, String>>(&url, ctx, arg)?;
+            let mut res = util::do_get::<PaginatedReleases<Release>, HashMap<&str, String>>(&url, ctx, arg)?;
             values.append(&mut res.values);
         }
     } else {
@@ -69,33 +69,33 @@ pub(crate) fn do_list_releases(
 
 fn assemble_query<'a>(ctx: &Cli, args: &'a ListReleasesArgs) -> (String, HashMap<&'a str, String>) {
     let margs = args.clone();
-    let reqUrl = format!("{}/rest/api/3/project/{}/version", ctx.baseJiraUrl, args.project);
+    let req_url = format!("{}/rest/api/3/project/{}/version", ctx.base_jira_url, args.project);
 
-    let queryParams = args_to_query_params(margs);
-    return (reqUrl.clone(), queryParams.clone());
+    let query_params = args_to_query_params(margs);
+    (req_url, query_params.clone())
 }
 
 fn args_to_query_params(args: ListReleasesArgs) -> HashMap<&'static str, String> {
-    let mut queryParams = HashMap::<&str, String>::new();
-    queryParams.insert("startAt", args.page_start_idx.to_string());
-    queryParams.insert("maxResults", args.page_size.to_string());
+    let mut query_params = HashMap::<&str, String>::new();
+    query_params.insert("startAt", args.page_start_idx.to_string());
+    query_params.insert("maxResults", args.page_size.to_string());
     if args.filter.is_some() {
-        queryParams.insert("query", (*args.filter.as_ref().unwrap().clone().to_string()).parse().unwrap());
+        query_params.insert("query", (*args.filter.as_ref().unwrap().clone()).parse().unwrap());
     }
-    return queryParams.clone();
+     query_params.clone()
 }
 
 
-fn page_loop(totalResults: i64, args: &ListReleasesArgs) -> Vec<HashMap<&str, String>> {
-    let remainder = totalResults % args.page_size;
-    let mut pages = totalResults / args.page_size;
+fn page_loop(total_results: i64, args: &ListReleasesArgs) -> Vec<HashMap<&str, String>> {
+    let remainder = total_results % args.page_size;
+    let mut pages = total_results / args.page_size;
     let mut startidx = args.page_start_idx;
     if remainder > 0 {
         pages += 1;
     }
     let mut requests: Vec::<HashMap<&str, String>>;
     requests = vec![];
-    for x in 0..pages {
+    for _ in 0..pages {
         let mut newargs = args.clone();
         newargs.update_start_idx(startidx);
         requests.push(args_to_query_params(newargs));
@@ -107,14 +107,11 @@ fn page_loop(totalResults: i64, args: &ListReleasesArgs) -> Vec<HashMap<&str, St
 #[cfg(test)]
 mod tests {
     use super::super::*;
-    use super::*;
 
-    use super::super::util::*;
     use crate::lib::util::Format;
     use crate::Cli;
-    use httptest::{matchers::*, responders::*, Expectation, Server, ServerPool};
-    use serde_json::json;
-    use std::collections::HashMap;
+    use httptest::{matchers::*, responders::*, Expectation, ServerPool};
+
 
     static SERVER_POOL: ServerPool = ServerPool::new(2);
 
@@ -124,11 +121,11 @@ mod tests {
         let server = SERVER_POOL.get_server();
 
         let ctx = Cli {
-            authToken: "".to_string(),
+            auth_token: "".to_string(),
 
-            output_format: Format::csv,
-            userEmail: "".to_string(),
-            baseJiraUrl: server.url("").to_string(),
+            output_format: Format::Csv,
+            user_email: "".to_string(),
+            base_jira_url: server.url("").to_string(),
             command: None,
         };
         let args = ListReleasesArgs {
@@ -140,8 +137,8 @@ mod tests {
         };
         let resp = PaginatedReleases {
             total: 2,
-            startAt: 0,
-            isLast: true,
+            start_at: 0,
+            is_last: true,
             values: vec![
                 Release {
                     id: "1".to_string(),
@@ -149,10 +146,10 @@ mod tests {
                     name: None,
                     archived: false,
                     released: false,
-                    releaseDate: None,
+                    release_date: None,
                     overdue: None,
-                    userReleaseDate: None,
-                    projectId: 0,
+                    user_release_date: None,
+                    project_id: 0,
                 },
                 Release {
                     id: "2".to_string(),
@@ -160,10 +157,10 @@ mod tests {
                     name: None,
                     archived: false,
                     released: false,
-                    releaseDate: None,
+                    release_date: None,
                     overdue: None,
-                    userReleaseDate: None,
-                    projectId: 0,
+                    user_release_date: None,
+                    project_id: 0,
                 },
             ],
         };
@@ -184,11 +181,11 @@ mod tests {
         let server = SERVER_POOL.get_server();
 
         let ctx = Cli {
-            authToken: "".to_string(),
+            auth_token: "".to_string(),
 
-            output_format: Format::csv,
-            userEmail: "".to_string(),
-            baseJiraUrl: server.url("").to_string(),
+            output_format: Format::Csv,
+            user_email: "".to_string(),
+            base_jira_url: server.url("").to_string(),
             command: None,
         };
         let args = ListReleasesArgs {
@@ -200,8 +197,8 @@ mod tests {
         };
         let resp1 = PaginatedReleases {
             total: 2,
-            startAt: 0,
-            isLast: false,
+            start_at: 0,
+            is_last: false,
             values: vec![
                 Release {
                     id: "1".to_string(),
@@ -209,17 +206,17 @@ mod tests {
                     name: None,
                     archived: false,
                     released: false,
-                    releaseDate: None,
+                    release_date: None,
                     overdue: None,
-                    userReleaseDate: None,
-                    projectId: 0,
+                    user_release_date: None,
+                    project_id: 0,
                 },
             ],
         };
         let resp2 = PaginatedReleases {
             total: 2,
-            startAt: 1,
-            isLast: true,
+            start_at: 1,
+            is_last: true,
             values: vec![
                 Release {
                     id: "2".to_string(),
@@ -227,10 +224,10 @@ mod tests {
                     name: None,
                     archived: false,
                     released: false,
-                    releaseDate: None,
+                    release_date: None,
                     overdue: None,
-                    userReleaseDate: None,
-                    projectId: 0,
+                    user_release_date: None,
+                    project_id: 0,
                 },
             ],
         };

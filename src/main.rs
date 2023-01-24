@@ -1,31 +1,24 @@
 mod lib;
 
-use lib::commands::*;
-use std::borrow::Borrow;
+use crate::lib::commands::*;
 use std::error::Error;
-use std::io;
-use std::path::PathBuf;
-use serde::Serialize;
-use serde::Deserialize;
 use clap::{Parser, Subcommand};
 use env_logger::Env;
-use log::{debug, error, log_enabled, info, Level};
-use crate::lib::commands::releases::ListReleasesArgs;
 use crate::lib::util::Format;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     #[arg(long, short, help = "jira personal access token")]
-    authToken: String,
+    auth_token: String,
 
     #[clap(value_enum)]
-    #[arg(long, default_value_t = Format::csv, help = "how returned items should be formatted")]
+    #[arg(long, default_value_t = Format::Csv, help = "how returned items should be formatted")]
     output_format: Format,
     #[arg(long, short, help = "email address the auth token belongs to")]
-    userEmail: String,
+    user_email: String,
     #[arg(long, short, help = "base url of the jira instance ex http://potato.atlassian.net")]
-    baseJiraUrl: String,
+    base_jira_url: String,
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -44,6 +37,7 @@ enum Commands {
     ListIssueTransitions(issues::ListIssueTransitionsArgs),
     /// transition issue
     TransitionIssue(issues::TransitionIssueArgs),
+    /// update an issue
     UpdateIssue(issues::UpdateIssueArgs)
 }
 
@@ -57,7 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level cmd
     match &cli.command {
-        Some(Commands::ListReleases(releaseArgs)) => releases::execute_list_releases(&cli, releaseArgs),
+        Some(Commands::ListReleases(release_args)) => releases::execute_list_releases(&cli, release_args),
         Some(Commands::CreateRelease(args)) => releases::execute_create_release(&cli, args),
         Some(Commands::DeleteRelease(args)) => releases::execute_delete_release(&cli, args),
         Some(Commands::UpdateRelease(args)) => releases::execute_update_release(&cli, args),

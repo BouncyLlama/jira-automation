@@ -7,10 +7,10 @@ use super::*;
 #[derive(Parser, Clone)]
 #[command()]
 pub struct ListIssueTransitionsArgs {
-    #[arg(long, short, help = issueNameHelp)]
+    #[arg(long, short, help = ISSUE_NAME_HELP)]
     pub(crate) name: String,
-    #[arg(long, short, help = includeUnavailableHelp, default_value_t = false)]
-    pub(crate) includeUnavailable: bool,
+    #[arg(long, short, help = INCLUDE_UNAVAILABLE_HELP, default_value_t = false)]
+    pub(crate) include_unavailable: bool,
 }
 
 #[derive(Deserialize,Serialize,Debug,Clone)]
@@ -19,18 +19,17 @@ struct ListTransitionsResponse{
 }
 pub fn execute_list_transitions(ctx: &Cli, args: &ListIssueTransitionsArgs) -> Result<(), Box<dyn std::error::Error>> {
     let values = do_list_transitions(ctx, args)?;
-    util::formatPrint::<Transition>(values, ctx.output_format)?;
+    util::format_print::<Transition>(values, ctx.output_format)?;
 
 
     Ok(())
 }
 
 pub(crate) fn do_list_transitions(ctx: &Cli, args: &ListIssueTransitionsArgs) -> Result<Vec<Transition>, Box<dyn std::error::Error>> {
-    let (reqUrl, queryParams) = assemble_query(ctx, args);
-    let url = reqUrl.clone();
+    let (req_url, query_params) = assemble_query(ctx, args);
     let mut values: Vec::<Transition>;
     values = vec![];
-    let mut res = util::doGet::<ListTransitionsResponse, HashMap<&str, String>>(&reqUrl, ctx, queryParams)?;
+    let mut res = util::do_get::<ListTransitionsResponse, HashMap<&str, String>>(&req_url, ctx, query_params)?;
 
 
     values.append(&mut res.transitions);
@@ -38,15 +37,11 @@ pub(crate) fn do_list_transitions(ctx: &Cli, args: &ListIssueTransitionsArgs) ->
     Ok(values)
 }
 
-fn execute_list_issue_transitions(ctx: &Cli, args: &ListIssueTransitionsArgs) {
-    let query = assemble_query(ctx, args);
-}
 
 fn assemble_query<'a>(ctx: &Cli, args: &'a ListIssueTransitionsArgs) -> (String, HashMap<&'a str, String>) {
-    let margs = args.clone();
-    let reqUrl = format!("{}/rest/api/3/issue/{}/transitions", ctx.baseJiraUrl, args.name);
+    let req_url = format!("{}/rest/api/3/issue/{}/transitions", ctx.base_jira_url, args.name);
 
-    let mut queryParams = HashMap::<&str, String>::new();
-    queryParams.insert("includeUnavailable", args.includeUnavailable.to_string());
-    return (reqUrl.clone(), queryParams.clone());
+    let mut query_params = HashMap::<&str, String>::new();
+    query_params.insert("includeUnavailable", args.include_unavailable.to_string());
+     (req_url, query_params.clone())
 }

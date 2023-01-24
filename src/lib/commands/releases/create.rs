@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::Cli;
-use crate::lib::commands::releases::{PaginatedReleases, Release};
+use crate::lib::commands::releases::{ Release};
 use crate::lib::util;
 use clap::Parser;
 use super::*;
@@ -8,16 +8,16 @@ use super::*;
 #[derive(Parser, Clone)]
 #[command()]
 pub struct CreateReleaseArgs {
-    #[arg(long, short, help = projectHelp)]
+    #[arg(long, short, help = PROJECT_HELP)]
     pub(crate) project: String,
-    #[arg(long, short, help = nameHelp)]
+    #[arg(long, short, help = NAME_HELP)]
     pub(crate) name: String,
-    #[arg(long, short, help = descriptionHelp)]
+    #[arg(long, short, help = DESCRIPTION_HELP)]
     pub(crate) description: Option<String>,
-    #[arg(long, short, help = startDateHelp)]
-    pub(crate) startDate: Option<String>,
-    #[arg(long, short, help = releaseDateHelp)]
-    pub(crate) releaseDate: Option<String>,
+    #[arg(long, short, help = START_DATE_HELP)]
+    pub(crate) start_date: Option<String>,
+    #[arg(long, short, help = RELEASE_DATE_HELP)]
+    pub(crate) release_date: Option<String>,
 }
 
 fn assemble_create_args(args: CreateReleaseArgs) -> HashMap<&'static str, String> {
@@ -27,20 +27,20 @@ fn assemble_create_args(args: CreateReleaseArgs) -> HashMap<&'static str, String
     if args.description.is_some() {
         params.insert("description", args.description.unwrap());
     }
-    if args.startDate.is_some() {
-        params.insert("startDate", args.startDate.unwrap());
+    if args.start_date.is_some() {
+        params.insert("startDate", args.start_date.unwrap());
     }
-    if args.releaseDate.is_some() {
-        params.insert("releaseDate", args.releaseDate.unwrap());
+    if args.release_date.is_some() {
+        params.insert("releaseDate", args.release_date.unwrap());
     }
-    return params;
+    params
 }
 
 pub fn execute_create_release(ctx: &Cli, args: &CreateReleaseArgs) -> Result<(), Box<dyn std::error::Error>> {
-    let reqUrl = format!("{}/rest/api/3/version", ctx.baseJiraUrl, );
-    let result = util::doPost::<Release, HashMap<&str, String>>(&reqUrl, ctx, &(assemble_create_args(args.clone())))?;
+    let req_url = format!("{}/rest/api/3/version", ctx.base_jira_url, );
+    let result = util::do_post::<Release, HashMap<&str, String>>(&req_url, ctx, &(assemble_create_args(args.clone())))?;
     if result.is_some() {
-        util::formatPrint::<Release>(Vec::from([result.unwrap()]), ctx.output_format)?;
+        util::format_print::<Release>(Vec::from([result.unwrap()]), ctx.output_format)?;
     }
 
     Ok(())

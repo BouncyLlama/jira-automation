@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::iter::Map;
 use crate::Cli;
-use crate::lib::commands::issues::Transition;
 use crate::lib::util;
 use clap::Parser;
 use clap::ArgGroup;
@@ -11,14 +9,14 @@ use super::*;
 #[derive(Parser, Clone)]
 #[command(group(ArgGroup::new("vers").required(true).args(["relatedVersion", "fixVersion"]),))]
 pub struct UpdateIssueArgs {
-    #[arg(long, short, help = issueNameHelp)]
+    #[arg(long, short, help = ISSUE_NAME_HELP)]
     pub(crate) name: String,
-    #[arg(long, short, help = fixVersionHelp)]
-    pub(crate) fixVersion: Option<String>,
-    #[arg(long, short, help = relatedVersionHelp)]
-    pub(crate) relatedVersion: Option<String>,
-    #[arg(long, short, help = byIdHelp, default_value_t = false)]
-    pub(crate) useVersionId: bool,
+    #[arg(long, short, help = FIX_VERSION_HELP)]
+    pub(crate) fix_version: Option<String>,
+    #[arg(long, short, help = RELATED_VERSION_HELP)]
+    pub(crate) related_version: Option<String>,
+    #[arg(long, short, help = BY_ID_HELP, default_value_t = false)]
+    pub(crate) use_version_id: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -34,22 +32,22 @@ fn do_update(ctx: &Cli, args: &UpdateIssueArgs) -> Result<(), Box<dyn Error>> {
     let mut req = UpdateIssueRequest {
         update: HashMap::new()
     };
-    if args.fixVersion.is_some() {
-        if args.useVersionId {
-            req.update.insert("fixVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("id".parse().unwrap(), args.fixVersion.clone().unwrap())]))])]));
+    if args.fix_version.is_some() {
+        if args.use_version_id {
+            req.update.insert("fixVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("id".parse().unwrap(), args.fix_version.clone().unwrap())]))])]));
         } else {
-            req.update.insert("fixVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("name".parse().unwrap(), args.fixVersion.clone().unwrap())]))])]));
+            req.update.insert("fixVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("name".parse().unwrap(), args.fix_version.clone().unwrap())]))])]));
         }
     }
-    if args.relatedVersion.is_some() {
-        if args.useVersionId {
-            req.update.insert("relatedVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("id".parse().unwrap(), args.relatedVersion.clone().unwrap())]))])]));
+    if args.related_version.is_some() {
+        if args.use_version_id {
+            req.update.insert("relatedVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("id".parse().unwrap(), args.related_version.clone().unwrap())]))])]));
         } else {
-            req.update.insert("relatedVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("name".parse().unwrap(), args.relatedVersion.clone().unwrap())]))])]));
+            req.update.insert("relatedVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("name".parse().unwrap(), args.related_version.clone().unwrap())]))])]));
         }
     }
 
-    let reqUrl = format!("{}/rest/api/3/issue/{}", ctx.baseJiraUrl, args.name);
-    let result = util::doPut::<(), UpdateIssueRequest>(&reqUrl, ctx, &req)?;
+    let req_url = format!("{}/rest/api/3/issue/{}", ctx.base_jira_url, args.name);
+    util::do_put::<(), UpdateIssueRequest>(&req_url, ctx, &req)?;
     Ok(())
 }
