@@ -38,7 +38,9 @@ enum Commands {
     /// transition issue
     TransitionIssue(issues::TransitionIssueArgs),
     /// update an issue
-    UpdateIssue(issues::UpdateIssueArgs)
+    UpdateIssue(issues::UpdateIssueArgs),
+    /// jql search for issues
+    SearchIssues(issues::SearchIssuesArgs),
 }
 
 
@@ -58,6 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(Commands::ListIssueTransitions(args)) => issues::execute_list_transitions(&cli, args),
         Some(Commands::TransitionIssue(args)) => issues::execute_transition_issue(&cli, args),
         Some(Commands::UpdateIssue(args)) => issues::execute_update_issue(&cli, args),
+        Some(Commands::SearchIssues(args)) => issues::execute_search_issues(&cli, args),
 
         None => { Ok(()) }
     }

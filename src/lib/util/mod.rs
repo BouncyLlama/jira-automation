@@ -14,6 +14,9 @@ pub enum Format {
     Json,
 }
 
+
+
+
 pub fn format_print<T: Serialize>(items: Vec<T>, format: Format) -> Result<(), Box<dyn std::error::Error>> {
     match format {
         Format::Csv => {
