@@ -48,7 +48,7 @@ enum Commands {
     UpdateIssue(issues::UpdateIssueArgs),
     /// jql search for issues
     SearchIssues(issues::SearchIssuesArgs),
-    /// release completed issues,
+    /// release completed issues
     ReleaseAllCompletedIssues(compositions::ReleaseCompletedIssuesArgs),
 }
 
@@ -57,8 +57,6 @@ fn main() -> Result<(), AppError> {
 
     env_logger::Builder::from_env(Env::default().default_filter_or("warn")).init();
 
-    // You can check for the existence of subcommands, and if found use their
-    // matches just as you would the top level cmd
     let result = match &cli.command {
         Some(Commands::ListReleases(release_args)) => {
             releases::execute_list_releases(&cli, release_args)
@@ -85,5 +83,4 @@ fn main() -> Result<(), AppError> {
         }
     }
 
-    // Continued program logic goes here...
 }
