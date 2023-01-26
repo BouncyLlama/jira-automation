@@ -1,9 +1,12 @@
+extern crate core;
+
 mod lib;
 
 use crate::lib::commands::*;
 use std::error::Error;
 use clap::{Parser, Subcommand};
 use env_logger::Env;
+use log::error;
 use crate::lib::util::Format;
 
 #[derive(Parser)]
@@ -52,7 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level cmd
-    match &cli.command {
+    let result = match &cli.command {
         Some(Commands::ListReleases(release_args)) => releases::execute_list_releases(&cli, release_args),
         Some(Commands::CreateRelease(args)) => releases::execute_create_release(&cli, args),
         Some(Commands::DeleteRelease(args)) => releases::execute_delete_release(&cli, args),
@@ -63,6 +66,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(Commands::SearchIssues(args)) => issues::execute_search_issues(&cli, args),
 
         None => { Ok(()) }
+    };
+
+    match result {
+        Ok(_) => { result }
+        Err(e) => {
+            error!("{:?}",e);
+            Err(e)
+        }
     }
 
 

@@ -7,7 +7,7 @@ use clap::ArgGroup;
 use super::*;
 
 #[derive(Parser, Clone)]
-#[command(group(ArgGroup::new("vers").required(true).args(["relatedVersion", "fixVersion"]),))]
+#[command(group(ArgGroup::new("vers").required(true).args(["related_version", "fix_version"]),))]
 pub struct UpdateIssueArgs {
     #[arg(long, short, help = ISSUE_NAME_HELP)]
     pub(crate) name: String,

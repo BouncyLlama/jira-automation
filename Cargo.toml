@@ -10,14 +10,14 @@ clap = { version = "4.0.32", features = ["derive"] }
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 serde = { version = "1.0", features = ["derive"] }
 env_logger = "0.10.0"
-log="*"
-base64="*"
+log="0.4.17"
+base64="0.21.0"
 csv = "1.1"
-serde_json="*"
-httptest="*"
-
+serde_json="1.0.91"
+httptest="0.15.4"
+thiserror = "1.0.38"
 [dev-dependencies]
-insta = "*"
+insta = "1.26.0"
 [profile.dev.package.insta]
 opt-level = 3
 
