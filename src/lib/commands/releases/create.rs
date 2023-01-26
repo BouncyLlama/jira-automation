@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use crate::Cli;
-use crate::lib::commands::releases::{ Release};
-use crate::lib::util;
-use clap::Parser;
 use super::*;
+use crate::lib::commands::releases::Release;
+use crate::lib::{util, AppError};
+use crate::Cli;
+use clap::Parser;
+use std::collections::HashMap;
 
 #[derive(Parser, Clone)]
 #[command()]
@@ -36,12 +36,23 @@ fn assemble_create_args(args: CreateReleaseArgs) -> HashMap<&'static str, String
     params
 }
 
-pub fn execute_create_release(ctx: &Cli, args: &CreateReleaseArgs) -> Result<(), Box<dyn std::error::Error>> {
-    let req_url = format!("{}/rest/api/3/version", ctx.base_jira_url, );
-    let result = util::do_post::<Release, HashMap<&str, String>>(&req_url, ctx, &(assemble_create_args(args.clone())))?;
+pub fn execute_create_release(ctx: &Cli, args: &CreateReleaseArgs) -> Result<(), AppError> {
+    let result = do_create_release(ctx, args)?;
     if result.is_some() {
         util::format_print::<Release>(Vec::from([result.unwrap()]), ctx.output_format)?;
     }
 
     Ok(())
+}
+
+pub fn do_create_release(ctx: &Cli, args: &CreateReleaseArgs) -> Result<Option<Release>, AppError> {
+    let req_url = format!("{}/rest/api/3/version", ctx.base_jira_url,);
+    match util::do_post::<Release, HashMap<&str, String>>(
+        &req_url,
+        ctx,
+        &(assemble_create_args(args.clone())),
+    ) {
+        Ok(r) => Ok(r),
+        Err(_) => Err(AppError::CouldNotCreateRelease),
+    }
 }

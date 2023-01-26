@@ -3,11 +3,11 @@ extern crate core;
 mod lib;
 
 use crate::lib::commands::*;
-use std::error::Error;
+use crate::lib::util::Format;
+use crate::lib::AppError;
 use clap::{Parser, Subcommand};
 use env_logger::Env;
 use log::error;
-use crate::lib::util::Format;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -20,7 +20,11 @@ pub struct Cli {
     output_format: Format,
     #[arg(long, short, help = "email address the auth token belongs to")]
     user_email: String,
-    #[arg(long, short, help = "base url of the jira instance ex http://potato.atlassian.net")]
+    #[arg(
+        long,
+        short,
+        help = "base url of the jira instance ex http://potato.atlassian.net"
+    )]
     base_jira_url: String,
     #[command(subcommand)]
     command: Option<Commands>,
@@ -44,19 +48,21 @@ enum Commands {
     UpdateIssue(issues::UpdateIssueArgs),
     /// jql search for issues
     SearchIssues(issues::SearchIssuesArgs),
+    /// release completed issues,
+    ReleaseAllCompletedIssues(compositions::ReleaseCompletedIssuesArgs),
 }
 
-
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), AppError> {
     let cli = Cli::parse();
 
     env_logger::Builder::from_env(Env::default().default_filter_or("warn")).init();
 
-
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level cmd
     let result = match &cli.command {
-        Some(Commands::ListReleases(release_args)) => releases::execute_list_releases(&cli, release_args),
+        Some(Commands::ListReleases(release_args)) => {
+            releases::execute_list_releases(&cli, release_args)
+        }
         Some(Commands::CreateRelease(args)) => releases::execute_create_release(&cli, args),
         Some(Commands::DeleteRelease(args)) => releases::execute_delete_release(&cli, args),
         Some(Commands::UpdateRelease(args)) => releases::execute_update_release(&cli, args),
@@ -64,21 +70,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(Commands::TransitionIssue(args)) => issues::execute_transition_issue(&cli, args),
         Some(Commands::UpdateIssue(args)) => issues::execute_update_issue(&cli, args),
         Some(Commands::SearchIssues(args)) => issues::execute_search_issues(&cli, args),
+        Some(Commands::ReleaseAllCompletedIssues(args)) => {
+            compositions::execute_do_release(&cli, args)
+        }
 
-        None => { Ok(()) }
+        None => Ok(()),
     };
 
     match result {
-        Ok(_) => { result }
+        Ok(_) => result,
         Err(e) => {
-            error!("{:?}",e);
+            error!("{:?}", e);
             Err(e)
         }
     }
 
-
     // Continued program logic goes here...
 }
-
-
-

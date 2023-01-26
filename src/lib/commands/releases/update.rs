@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-use crate::Cli;
-use crate::lib::util;
-use clap::Parser;
 use super::*;
-
+use crate::lib::{util, AppError};
+use crate::Cli;
+use clap::Parser;
+use std::collections::HashMap;
 
 #[derive(Parser, Clone)]
 #[command()]
@@ -26,26 +25,37 @@ pub struct UpdateReleaseArgs {
     pub(crate) project: String,
 }
 
-
 impl UpdateReleaseArgs {
     fn set_release(&mut self, new: String) {
         self.release = new;
     }
 }
 
-pub fn execute_update_release(ctx: &Cli, args: &UpdateReleaseArgs) -> Result<(), Box<dyn std::error::Error>> {
+pub fn execute_update_release(ctx: &Cli, args: &UpdateReleaseArgs) -> Result<(), AppError> {
+    do_update_release(ctx, args)
+}
+
+pub fn do_update_release(ctx: &Cli, args: &UpdateReleaseArgs) -> Result<(), AppError> {
     let mut mutargs = args.clone();
     if args.by_id.is_some() && args.by_id.unwrap() == true {
         let req_url = format!("{}/rest/api/3/version/{}", ctx.base_jira_url, args.release);
 
-        util::do_put::<(), HashMap<&str, String>>(&req_url, ctx, &(assemble_update_args(args.clone())))?;
+        util::do_put::<(), HashMap<&str, String>>(
+            &req_url,
+            ctx,
+            &(assemble_update_args(args.clone())),
+        )?;
     } else {
         let id = get_id_from_name(ctx, args.project.clone(), args.release.clone())?;
         let req_url = format!("{}/rest/api/3/version/{}", ctx.base_jira_url, id);
 
-        debug!("found release {} for name {}",id,args.release);
+        debug!("found release {} for name {}", id, args.release);
         mutargs.set_release(id);
-        util::do_put::<(), HashMap<&str, String>>(&req_url, ctx, &(assemble_update_args(mutargs.clone())))?;
+        util::do_put::<(), HashMap<&str, String>>(
+            &req_url,
+            ctx,
+            &(assemble_update_args(mutargs.clone())),
+        )?;
     }
 
     Ok(())

@@ -1,21 +1,20 @@
-use std::error::Error;
-use clap::Parser;
-use crate::Cli;
-use serde::Serialize;
 use crate::lib::commands::issues::{Issue, PaginatedIssues};
-use crate::lib::util;
 use crate::lib::util::Format;
 use crate::lib::util::Format::Json;
+use crate::lib::{util, AppError};
+use crate::Cli;
+use clap::Parser;
+use serde::Serialize;
 
 #[derive(Parser, Clone)]
 #[command()]
 pub struct SearchIssuesArgs {
     pub jql: String,
     #[arg(
-    long,
-    short,
-    default_value_t = false,
-    help = "automatically query until all pages have been obtained"
+        long,
+        short,
+        default_value_t = false,
+        help = "automatically query until all pages have been obtained"
     )]
     pub(crate) unpaginate: bool,
     #[arg(long, default_value_t = 50, help = "how many items to return")]
@@ -48,39 +47,43 @@ struct CsvCompatibleIssue {
     pub fix_versions: String,
 }
 
-
-pub fn execute_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<(), Box<dyn std::error::Error>> {
-    do_search_issues(cli, args)
+pub fn execute_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<(), AppError> {
+    let results = do_search_issues(cli, args)?;
+    match cli.output_format {
+        Format::Csv => {
+            let csvresults: Vec<CsvCompatibleIssue> = results
+                .iter()
+                .map(|r| CsvCompatibleIssue {
+                    key: r.key.clone(),
+                    id: r.id.clone(),
+                    summary: r.fields.summary.clone(),
+                    status: r.fields.status.name.clone(),
+                    fix_versions: r
+                        .fields
+                        .fix_versions
+                        .iter()
+                        .map(|v| v.name.clone())
+                        .collect::<Vec<String>>()
+                        .join("|"),
+                })
+                .collect();
+            util::format_print(csvresults, cli.output_format)
+        }
+        Json => util::format_print(results, cli.output_format),
+    }
 }
 
-pub fn do_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<(), Box<dyn Error>> {
+pub fn do_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<Vec<Issue>, AppError> {
     let mut req = SearchIssuesRequest {
         jql: args.jql.clone(),
         start_at: args.page_start_idx,
         max_results: args.page_size,
         fields: vec!["summary", "status", "fixVersions"],
     };
-    let results = page_loop(cli, &mut req)?;
-    match cli.output_format {
-        Format::Csv => {
-            let csvresults: Vec<CsvCompatibleIssue> = results.iter().map(|r|  {
-                CsvCompatibleIssue {
-                    key: r.key.clone(),
-                    id: r.id.clone(),
-                    summary: r.fields.summary.clone(),
-                    status: r.fields.status.name.clone(),
-                    fix_versions: r.fields.fix_versions.iter().map(|v| v.name.clone()).collect::<Vec<String>>().join("|")
-                }
-            }).collect();
-            util::format_print(csvresults, cli.output_format)
-        }
-        Json => {
-            util::format_print(results, cli.output_format)
-        }
-    }
+    page_loop(cli, &mut req)
 }
 
-fn page_loop(ctx: &Cli, request: &mut SearchIssuesRequest) -> Result<Vec<Issue>, Box<dyn std::error::Error>> {
+fn page_loop(ctx: &Cli, request: &mut SearchIssuesRequest) -> Result<Vec<Issue>, AppError> {
     let url = format!("{}/rest/api/3/search", ctx.base_jira_url);
     let result = util::do_post::<PaginatedIssues, SearchIssuesRequest>(&url, ctx, request)?;
     let mut issues: Vec<Issue> = vec![];
@@ -93,7 +96,11 @@ fn page_loop(ctx: &Cli, request: &mut SearchIssuesRequest) -> Result<Vec<Issue>,
         issues.append(&mut x.issues);
         for idx in 1..pages {
             request.set_start_idx(idx);
-            let newpage = util::do_post::<PaginatedIssues, SearchIssuesRequest>(&url.to_string(), ctx, request)?;
+            let newpage = util::do_post::<PaginatedIssues, SearchIssuesRequest>(
+                &url.to_string(),
+                ctx,
+                request,
+            )?;
             if let Some(mut page) = newpage {
                 issues.append(&mut page.issues);
             }

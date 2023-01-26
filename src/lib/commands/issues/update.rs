@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-use std::error::Error;
-use crate::Cli;
-use crate::lib::util;
-use clap::Parser;
-use clap::ArgGroup;
 use super::*;
+use crate::lib::{util, AppError};
+use crate::Cli;
+use clap::ArgGroup;
+use clap::Parser;
+use std::collections::HashMap;
 
 #[derive(Parser, Clone)]
 #[command(group(ArgGroup::new("vers").required(true).args(["related_version", "fix_version"]),))]
@@ -24,26 +23,53 @@ pub struct UpdateIssueRequest {
     update: HashMap<String, Vec<HashMap<String, HashMap<String, String>>>>,
 }
 
-pub fn execute_update_issue(ctx: &Cli, args: &UpdateIssueArgs) -> Result<(), Box<dyn Error>> {
+pub fn execute_update_issue(ctx: &Cli, args: &UpdateIssueArgs) -> Result<(), AppError> {
     do_update(ctx, args)
 }
 
-fn do_update(ctx: &Cli, args: &UpdateIssueArgs) -> Result<(), Box<dyn Error>> {
+fn do_update(ctx: &Cli, args: &UpdateIssueArgs) -> Result<(), AppError> {
     let mut req = UpdateIssueRequest {
-        update: HashMap::new()
+        update: HashMap::new(),
     };
     if args.fix_version.is_some() {
         if args.use_version_id {
-            req.update.insert("fixVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("id".parse().unwrap(), args.fix_version.clone().unwrap())]))])]));
+            req.update.insert(
+                "fixVersions".parse().unwrap(),
+                Vec::from([HashMap::from([(
+                    "add".parse().unwrap(),
+                    HashMap::from([("id".parse().unwrap(), args.fix_version.clone().unwrap())]),
+                )])]),
+            );
         } else {
-            req.update.insert("fixVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("name".parse().unwrap(), args.fix_version.clone().unwrap())]))])]));
+            req.update.insert(
+                "fixVersions".parse().unwrap(),
+                Vec::from([HashMap::from([(
+                    "add".parse().unwrap(),
+                    HashMap::from([("name".parse().unwrap(), args.fix_version.clone().unwrap())]),
+                )])]),
+            );
         }
     }
     if args.related_version.is_some() {
         if args.use_version_id {
-            req.update.insert("relatedVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("id".parse().unwrap(), args.related_version.clone().unwrap())]))])]));
+            req.update.insert(
+                "relatedVersions".parse().unwrap(),
+                Vec::from([HashMap::from([(
+                    "add".parse().unwrap(),
+                    HashMap::from([("id".parse().unwrap(), args.related_version.clone().unwrap())]),
+                )])]),
+            );
         } else {
-            req.update.insert("relatedVersions".parse().unwrap(), Vec::from([HashMap::from([("add".parse().unwrap(), HashMap::from([("name".parse().unwrap(), args.related_version.clone().unwrap())]))])]));
+            req.update.insert(
+                "relatedVersions".parse().unwrap(),
+                Vec::from([HashMap::from([(
+                    "add".parse().unwrap(),
+                    HashMap::from([(
+                        "name".parse().unwrap(),
+                        args.related_version.clone().unwrap(),
+                    )]),
+                )])]),
+            );
         }
     }
 
