@@ -69,7 +69,7 @@ pub fn do_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<(), Box<dy
                     id: r.id.clone(),
                     summary: r.fields.summary.clone(),
                     status: r.fields.status.name.clone(),
-                    fix_versions: r.fields.fix_versions.iter().map(|v| v.name.clone()).collect::<Vec<String>>().join(",")
+                    fix_versions: r.fields.fix_versions.iter().map(|v| v.name.clone()).collect::<Vec<String>>().join("|")
                 }
             }).collect();
             util::format_print(csvresults, cli.output_format)
