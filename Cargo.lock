@@ -667,7 +667,7 @@ checksum = "fad582f4b9e86b6caa621cabeb0963332d92eea04729ab12892c2533951e6440"
 
 [[package]]
 name = "jira-automation"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.21.0",
  "chrono",
