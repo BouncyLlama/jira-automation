@@ -17,6 +17,7 @@ csv = "1.1"
 serde_json="1.0.91"
 httptest="0.15.4"
 thiserror = "1.0.38"
+openssl = { version = "*", features = ["vendored"] } 
 [dev-dependencies]
 insta = "1.26.0"
 [profile.dev.package.insta]
