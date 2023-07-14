@@ -2,6 +2,7 @@ mod list_transition;
 mod search_issues;
 mod transition_issue;
 mod update;
+
 pub use list_transition::*;
 pub use search_issues::*;
 use serde::{Deserialize, Serialize};
@@ -39,7 +40,27 @@ pub struct IssueStatus {
 pub struct IssueFields {
     summary: String,
     status: IssueStatus,
+    description: Option<IssueDescription>,
     fix_versions: Vec<IssueRelease>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct IssueDescription {
+    pub(crate) content: Option<Vec<IssueDescriptionContent>>,
+
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct IssueDescriptionContent {
+    pub(crate) content: Option<Vec<IssueDescriptionContentContent>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct IssueDescriptionContentContent {
+    pub(crate) text: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,6 +70,7 @@ pub struct IssueRelease {
     description: Option<String>,
     name: String,
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Issue {

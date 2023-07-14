@@ -1,4 +1,4 @@
-use crate::lib::commands::issues::{Issue, PaginatedIssues};
+use crate::lib::commands::issues::{Issue, IssueDescriptionContent, PaginatedIssues};
 use crate::lib::util::Format;
 use crate::lib::util::Format::Json;
 use crate::lib::{util, AppError};
@@ -11,10 +11,10 @@ use serde::Serialize;
 pub struct SearchIssuesArgs {
     pub jql: String,
     #[arg(
-        long,
-        short,
-        default_value_t = false,
-        help = "automatically query until all pages have been obtained"
+    long,
+    short,
+    default_value_t = false,
+    help = "automatically query until all pages have been obtained"
     )]
     pub(crate) unpaginate: bool,
     #[arg(long, default_value_t = 50, help = "how many items to return")]
@@ -43,12 +43,14 @@ struct CsvCompatibleIssue {
     pub key: String,
     pub id: String,
     pub summary: String,
+    pub description: String,
     pub status: String,
     pub fix_versions: String,
 }
 
 pub fn execute_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<(), AppError> {
     let results = do_search_issues(cli, args)?;
+
     match cli.output_format {
         Format::Csv => {
             let csvresults: Vec<CsvCompatibleIssue> = results
@@ -57,6 +59,12 @@ pub fn execute_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<(), A
                     key: r.key.clone(),
                     id: r.id.clone(),
                     summary: r.fields.summary.clone(),
+                    description: r.fields.description.as_ref().and_then(|d| d.content.as_ref().and_then(|c|
+                        c.first()
+                            .and_then(|desc_content|
+                                desc_content.content.as_ref().and_then(|c|
+                                    c.first().and_then(|content_content|
+                                        content_content.text.clone()))))).unwrap_or("".to_string()),
                     status: r.fields.status.name.clone(),
                     fix_versions: r
                         .fields
@@ -78,7 +86,7 @@ pub fn do_search_issues(cli: &Cli, args: &SearchIssuesArgs) -> Result<Vec<Issue>
         jql: args.jql.clone(),
         start_at: args.page_start_idx,
         max_results: args.page_size,
-        fields: vec!["summary", "status", "fixVersions"],
+        fields: vec!["summary", "status", "fixVersions", "description"],
     };
     page_loop(cli, &mut req)
 }
